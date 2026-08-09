@@ -30,4 +30,8 @@
     <color name="text_primary">#E6EDF3</color>
     <color name="text_secondary">#8B949E</color>
     <color name="danger">#FF5252</color>
+
+    <!-- ECHO. Mirrors EchoColors.bg in echo/ui/EchoTheme.kt — used only for the
+         window background so launch does not flash a lighter colour. -->
+    <color name="echo_bg">#080808</color>
 </resources>

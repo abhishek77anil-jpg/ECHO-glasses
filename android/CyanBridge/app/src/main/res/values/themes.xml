@@ -13,4 +13,14 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+
+    <!-- ECHO runs entirely in Compose and paints its own near-black ground, so
+         this theme only needs to keep the platform out of the way: no action
+         bar, and a window background that matches EchoColors.bg (#080808) so
+         there is no light flash between launch and first frame. -->
+    <style name="Theme.Echo" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:windowBackground">@color/echo_bg</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 </resources>

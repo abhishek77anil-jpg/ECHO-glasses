@@ -139,6 +139,17 @@
             android:exported="false"
             android:label="Setup" />
 
+        <!-- ECHO: ambient awareness surface. Self-contained Compose feature —
+             see .echo/ for the package. Exported so it can be launched with
+             `adb shell am start -n com.fersaiyan.cyanbridge/.echo.EchoActivity`
+             while it is still being built out. -->
+        <activity
+            android:name=".echo.EchoActivity"
+            android:exported="true"
+            android:label="ECHO"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Echo" />
+
         <activity
             android:name=".ui.DeviceBindActivity" />
         <service
