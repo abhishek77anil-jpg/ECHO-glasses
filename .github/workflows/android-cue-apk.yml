@@ -44,6 +44,16 @@ jobs:
             "ndk;27.0.12077973" "cmake;3.22.1"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
 
+      - name: Fetch Git LFS objects in the vendored native sources
+        # Moonshine keeps some generated C++ (e.g. cpp-annote/src/*_embedded.cpp) in Git
+        # LFS. actions/checkout's `lfs` option covers the top-level repo, not submodules, so
+        # without this the files arrive as LFS pointer text and clang tries to compile
+        # "version https://git-lfs.github.com/spec/v1" as C++.
+        run: |
+          git -C third_party/moonshine lfs install --local
+          git -C third_party/moonshine lfs pull
+          head -c 64 third_party/moonshine/core/cpp-annote/src/community1_cpp_annote_embedded.cpp || true
+
       - name: Relax upstream -Werror in the vendored native build
         # third_party/moonshine/core/CMakeLists.txt line 18 applies
         # `-Wall -Wextra -pedantic -Werror` at directory level with no opt-out, and NDK 27's
