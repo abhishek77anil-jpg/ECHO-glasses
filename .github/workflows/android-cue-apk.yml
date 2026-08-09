@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
 
     steps:
       - name: Check out with submodules
@@ -67,6 +69,20 @@ jobs:
           path: android/CyanBridge/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish APK to a rolling release
+        # Artifacts are zipped and require a signed-in GitHub session, which makes them
+        # awkward to install from the test phone. A release asset is a direct, plain .apk
+        # URL that stays the same across builds, so the phone can just tap it.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "${{ steps.apk.outputs.path }}" cue-diagnostics.apk
+          gh release delete cue-latest --yes --cleanup-tag || true
+          gh release create cue-latest cue-diagnostics.apk \
+            --title "Cue Diagnostics (latest)" \
+            --notes "Debug APK from ${{ github.sha }}. Sideload alongside CyanBridge; connect the glasses in the main app first." \
+            --prerelease
 
       - name: Upload build reports on failure
         if: failure()
