@@ -44,6 +44,20 @@ jobs:
             "ndk;27.0.12077973" "cmake;3.22.1"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
 
+      - name: Relax upstream -Werror in the vendored native build
+        # third_party/moonshine/core/CMakeLists.txt line 18 applies
+        # `-Wall -Wextra -pedantic -Werror` at directory level with no opt-out, and NDK 27's
+        # clang diagnoses more than the toolchain upstream builds with — it fails on an
+        # unused static in their own moonshine-c-api.cpp.
+        #
+        # This cannot be fixed from Gradle: CMake places CMAKE_CXX_FLAGS *before*
+        # add_compile_options, so a -Wno-error we pass is overridden, and their -Wall would
+        # re-enable the specific warning anyway. Patching the checkout is the only lever.
+        # It touches a submodule working copy in CI only; nothing is committed.
+        run: |
+          sed -i 's/ -Werror//g' third_party/moonshine/core/CMakeLists.txt
+          grep -n 'add_compile_options(-Wall' third_party/moonshine/core/CMakeLists.txt || true
+
       - name: Assemble debug APK
         working-directory: android/CyanBridge
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
