@@ -1,8 +1,12 @@
 package com.fersaiyan.cyanbridge.echo.ui
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,22 +98,39 @@ fun BigBtn(
     }
     val subColor = if (primary) EchoColors.onPrimarySub else EchoColors.text2
 
+    // A destructive action must not be signalled by colour alone (a red border reads as an
+    // ordinary border to a red-green colour-blind user, and to anyone in bright sun). The
+    // border thickens and the label carries a warning glyph, so the meaning survives with
+    // colour removed entirely.
+    val borderWidth = if (danger) 3.dp else 1.5.dp
+    val displayLabel = if (danger) "⚠  $label" else label
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressScale = rememberPressScale(interactionSource)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = EchoDimens.bigButtonMinHeight)
             .padding(bottom = 14.dp)
+            .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
             .clip(EchoShapes.button)
             .background(background)
-            .border(1.5.dp, borderColor, EchoShapes.button)
-            .clickable(role = Role.Button, onClick = onClick)
+            .border(borderWidth, borderColor, EchoShapes.button)
+            .echoFocusRing(interactionSource, EchoShapes.button)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                role = Role.Button,
+                onClick = onClick,
+            )
             .semantics { contentDescription = contentDesc ?: label }
             .padding(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = label,
+            text = displayLabel,
             style = EchoText.bigButton.copy(color = labelColor),
             textAlign = TextAlign.Center,
         )

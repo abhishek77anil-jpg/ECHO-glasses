@@ -13,16 +13,37 @@ import androidx.compose.ui.unit.sp
  * people with low vision as often as by people with none, and every surface
  * here clears WCAG AA against [EchoColors.bg].
  *
- * Ported 1:1 from echo/src/theme/colors.js — keep the two in sync.
+ * Originally ported 1:1 from echo/src/theme/colors.js. It has since diverged: three tokens
+ * were measured against WCAG and corrected (see each below). **Port these values back to the
+ * JS before syncing in the other direction**, or the fixes will be silently reverted.
  */
 object EchoColors {
     val bg = Color(0xFF080808)
     val surface = Color(0xFF111111)
     val surface2 = Color(0xFF181818)
-    val captureBorder = Color(0xFF2A2A2A)
+
+    /**
+     * Outline of the capture control. Was #2A2A2A, which measured **1.32:1** against
+     * [surface] — WCAG 1.4.11 requires 3:1 for a control's boundary, so the edge of the
+     * app's single most important button was effectively invisible to anyone with reduced
+     * contrast sensitivity. Now 3.5:1.
+     */
+    val captureBorder = Color(0xFF6B6B6B)
+
     val text = Color(0xFFFFFFFF)
-    val text2 = Color(0xFFA0A0A0)
-    val border = Color(0xFF333333)
+
+    /**
+     * Secondary text. Was #A0A0A0, which cleared AA but landed at 6.7:1 on [surface2] —
+     * short of the 7:1 AAA bar for body text. Raised to 8.4:1 there and 9.6:1 on [bg].
+     * AA is the floor for a general app; this one's users are the reason AAA exists.
+     */
+    val text2 = Color(0xFFB4B4B4)
+
+    /**
+     * Component borders. Was #333333, measuring **1.50:1** against [surface] and failing
+     * the same non-text contrast rule as [captureBorder]. Now 3.3:1.
+     */
+    val border = Color(0xFF666666)
     val focus = Color(0xFF7DD3FC)
     val ok = Color(0xFF4ADE80)
     val warn = Color(0xFFFBBF24)

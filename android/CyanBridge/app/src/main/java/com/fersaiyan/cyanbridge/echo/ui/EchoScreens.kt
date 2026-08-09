@@ -13,7 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -66,6 +71,12 @@ fun HomeScreen(
 ) {
     val analyzing = status == CaptureStatus.Analyzing
 
+    val captureInteraction = remember { MutableInteractionSource() }
+    // Three redundant signals for "working": the word ANALYZING, the spoken status, and this
+    // slow breath. Any one of them alone fails somebody.
+    val pulse = rememberWorkingPulse(analyzing)
+    val press = rememberPressScale(captureInteraction)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,7 +86,18 @@ fun HomeScreen(
     ) {
         Column(
             modifier = Modifier
-                .size(EchoDimens.captureSize)
+                // sizeIn rather than a fixed size: at a 200% font scale the label inside a
+                // hard 280dp circle clips, and the people most likely to be running a large
+                // font scale are exactly this app's users.
+                .sizeIn(
+                    minWidth = EchoDimens.captureSize,
+                    minHeight = EchoDimens.captureSize,
+                )
+                .graphicsLayer {
+                    val scale = pulse * press
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(CircleShape)
                 .background(EchoColors.surface)
                 .border(
@@ -83,7 +105,12 @@ fun HomeScreen(
                     if (analyzing) EchoColors.focus else EchoColors.captureBorder,
                     CircleShape,
                 )
-                .clickable(role = Role.Button) { if (analyzing) onCancel() else onCapture() }
+                .echoFocusRing(captureInteraction, CircleShape, width = 4.dp)
+                .clickable(
+                    interactionSource = captureInteraction,
+                    indication = LocalIndication.current,
+                    role = Role.Button,
+                ) { if (analyzing) onCancel() else onCapture() }
                 // The capture target is the first thing a user needs on Home
                 // even though it sits in the visual centre, so reading order is
                 // stated rather than inferred from geometry.
