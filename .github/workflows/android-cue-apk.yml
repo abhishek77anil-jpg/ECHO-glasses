@@ -15,6 +15,19 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+    env:
+      # The Meta Wearables DAT SDK lives on GitHub Packages, which requires a token with
+      # read:packages even though facebook/meta-wearables-dat-android is public.
+      #
+      # This is not optional for the build: app/build.gradle gates the *dependencies* on
+      # this token but compiles devices/metarayban/** unconditionally, and MainActivity and
+      # CommunityPluginsActivity import com.meta.wearable.dat.* directly. Without it,
+      # :app:compileDebugKotlin fails on ~90 unresolved references.
+      #
+      # The automatic github.token cannot be used — it only grants package read for this
+      # repository's own packages. Set a repository secret named META_DAT_TOKEN holding a
+      # PAT with the read:packages scope.
+      GITHUB_TOKEN: ${{ secrets.META_DAT_TOKEN }}
 
     steps:
       - name: Check out with submodules
