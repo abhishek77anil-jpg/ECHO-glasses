@@ -17,8 +17,12 @@ object CommandParser {
         val text = normalise(utterance)
         if (text.isBlank()) return AssistantIntent.OpenQuestion(utterance.trim())
 
-        // Stop is checked first and matched loosely. When someone says stop they mean now,
-        // and making them compete with other patterns for it would be a bad joke.
+        // "stop scanning" means stop that feature, not stop talking, so the specific
+        // stop-commands are resolved before the blanket one. Everything else still loses to
+        // bare "stop": when someone says stop they mean now.
+        if (matchesAny(text, START_SURROUNDINGS)) return AssistantIntent.SetSurroundings(true)
+        if (matchesAny(text, STOP_SURROUNDINGS)) return AssistantIntent.SetSurroundings(false)
+
         if (matchesAny(text, STOP)) return AssistantIntent.Stop
 
         if (matchesAny(text, WHO_IS_HERE)) return AssistantIntent.WhoIsHere
@@ -29,6 +33,11 @@ object CommandParser {
         SPEECH_CHANGES.forEach { (phrases, change) ->
             if (matchesAny(text, phrases)) return AssistantIntent.AdjustSpeech(change)
         }
+
+        // Checked before the camera patterns: "what's around me" is about the room, while
+        // "what's this" is about the thing being held up, and conflating them would point
+        // the camera when the user wanted the scene.
+        if (matchesAny(text, DESCRIBE_SURROUNDINGS)) return AssistantIntent.DescribeSurroundings
 
         whatWasSaid(text)?.let { return it }
 
@@ -102,6 +111,23 @@ object CommandParser {
     private val HELP = listOf(
         "what can you do", "help", "what are my options", "commands", "how do i use this",
         "what can i ask",
+    )
+
+    private val DESCRIBE_SURROUNDINGS = listOf(
+        "what is around me", "what's around me", "whats around me", "describe my surroundings",
+        "describe the room", "what is near me", "what's near me", "where am i",
+        "what is around", "surroundings", "what is in the room", "anything in my way",
+        "is anything in my way",
+    )
+
+    private val START_SURROUNDINGS = listOf(
+        "start surroundings", "turn on surroundings", "enable surroundings",
+        "start describing", "start guiding", "start scanning", "keep telling me",
+    )
+
+    private val STOP_SURROUNDINGS = listOf(
+        "stop surroundings", "turn off surroundings", "disable surroundings",
+        "stop describing", "stop guiding", "stop scanning", "stop telling me",
     )
 
     private val DESCRIBE_VIEW = listOf(

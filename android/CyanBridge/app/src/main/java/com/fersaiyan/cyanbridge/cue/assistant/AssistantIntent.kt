@@ -28,6 +28,12 @@ sealed interface AssistantIntent {
     /** "what am I looking at" — the only intent that needs the camera. */
     data class DescribeView(val question: String? = null) : AssistantIntent
 
+    /** "what's around me" — answered from the most recent ambient scan, on demand. */
+    data object DescribeSurroundings : AssistantIntent
+
+    /** "start surroundings" / "stop surroundings" — toggles the periodic scan. */
+    data class SetSurroundings(val enabled: Boolean) : AssistantIntent
+
     /** "stop", "quiet" — always available, always immediate. */
     data object Stop : AssistantIntent
 
@@ -60,6 +66,12 @@ data class AssistantReply(
         data object StopSpeaking : Action
         data object RepeatLast : Action
         data class CapturePhoto(val question: String?) : Action
+
+        /** Read out the latest ambient scan, bypassing its usual cooldowns. */
+        data object DescribeSurroundings : Action
+
+        /** Turn the periodic surroundings scan on or off. */
+        data class SetAmbientScanning(val enabled: Boolean) : Action
 
         /**
          * Hand off to the model. Kept as an action rather than a call inside the assistant

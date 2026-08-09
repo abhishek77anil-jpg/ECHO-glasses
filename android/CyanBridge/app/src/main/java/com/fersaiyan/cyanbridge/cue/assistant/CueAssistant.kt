@@ -47,6 +47,23 @@ class CueAssistant(
                 isPending = true,
             )
 
+            is AssistantIntent.DescribeSurroundings -> AssistantReply(
+                speech = null,
+                action = AssistantReply.Action.DescribeSurroundings,
+                isPending = true,
+            )
+
+            is AssistantIntent.SetSurroundings -> AssistantReply(
+                speech = if (intent.enabled) {
+                    // The reminder is repeated on every enable, not just at onboarding.
+                    // People turn this on weeks later, in a hurry, having forgotten.
+                    "Surroundings on. It's extra information, not a replacement for your cane."
+                } else {
+                    "Surroundings off"
+                },
+                action = AssistantReply.Action.SetAmbientScanning(intent.enabled),
+            )
+
             is AssistantIntent.AdjustSpeech -> AssistantReply(
                 speech = confirmSpeechChange(intent.change),
                 action = AssistantReply.Action.ChangeSpeech(intent.change),
