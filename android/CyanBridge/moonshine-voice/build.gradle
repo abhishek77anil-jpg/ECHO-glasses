@@ -15,6 +15,18 @@ android {
             abiFilters 'arm64-v8a'
         }
 
+        externalNativeBuild {
+            cmake {
+                // Moonshine's own CMake builds with -Werror, and NDK 27's clang rejects
+                // upstream code we do not own (an unused static in moonshine-c-api.cpp).
+                // Downgrading their warnings-as-errors is the only sane option short of
+                // patching a vendored third-party source tree; it changes nothing about
+                // how our code is compiled.
+                cFlags '-Wno-error'
+                cppFlags '-Wno-error'
+            }
+        }
+
         consumerProguardFiles 'consumer-rules.pro'
     }
 
