@@ -112,6 +112,21 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Cue hardware diagnostics (PRD Spikes A/B/C).
+            Its own launcher entry so the diagnostics build needs no changes to MainActivity.
+        -->
+        <activity
+            android:name=".cue.diagnostics.CueDiagnosticsActivity"
+            android:exported="true"
+            android:label="Cue Diagnostics">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <!-- AppLockGuideActivity removed (redundant onboarding screen) -->
 
         <activity
