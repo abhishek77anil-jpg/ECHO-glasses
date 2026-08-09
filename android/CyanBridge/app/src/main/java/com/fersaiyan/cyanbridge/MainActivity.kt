@@ -107,8 +107,6 @@ import com.fersaiyan.cyanbridge.ai.transcription.NoOpAudioChunker
 import com.fersaiyan.cyanbridge.ai.transcription.OpenAIWhisperTranscriptionProvider
 import com.fersaiyan.cyanbridge.ai.transcription.RetryPolicy
 import com.fersaiyan.cyanbridge.ai.transcription.RetryingTranscriptionProvider
-import com.fersaiyan.cyanbridge.ai.transcription.vosk.VoskModelManager
-import com.fersaiyan.cyanbridge.ai.transcription.vosk.VoskTranscriptionProvider
 import com.fersaiyan.cyanbridge.ai.transcription.TranscriptionProgress
 import com.fersaiyan.cyanbridge.ai.transcription.TranscriptionResult
 import com.fersaiyan.cyanbridge.ai.transcription.TranscriptionService

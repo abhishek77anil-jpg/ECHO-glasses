@@ -31,6 +31,9 @@ android {
     namespace = "com.fersaiyan.cyanbridge"
     compileSdk = 35
 
+    // Align app-packaged native code with 16 KB page-size devices (Android 15+).
+    ndkVersion = "28.2.13676358"
+
     defaultConfig {
         applicationId = "com.fersaiyan.cyanbridge"
         // Meta DAT declares minSdk 29. Keep the regular build on API 24 if Meta SDK is skipped.
@@ -39,6 +42,13 @@ android {
         versionCode = 14
         versionName = "2.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Ship only arm64-v8a. Extra ABIs from third-party AARs (armeabi-v7a/x86/…)
+        // bloat the APK and often still ship 4 KB-aligned LOAD segments that trip
+        // Play / PackageManager 16 KB checks on modern devices.
+        ndk {
+            abiFilters "arm64-v8a"
+        }
 
         // Chapter 6: optional transcription API key (do not commit secrets).
         def openAiKey = project.findProperty("OPENAI_API_KEY") ?: ""
@@ -139,6 +149,14 @@ android {
             includeAndroidResources = true
         }
     }
+
+    // Uncompressed, 16 KB-zipaligned .so packaging (AGP 8.5.1+). Required so the
+    // installer can mmap native libs on 16 KB page-size devices.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 
@@ -199,17 +217,22 @@ dependencies {
     // LiteRT runtime for local models (Google's inference engine)
     implementation("com.google.ai.edge.litertlm:litertlm-android:0.14.0")
 
-    // Keep Walking Aid's vision runtime separate from LiteRT-LM. Loading the generic
-    // LiteRT artifacts alongside LiteRT-LM can leave nativeSendMessage blocked.
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    // Walking Aid vision runtime. Use LiteRT (ex-TFLite) packages that ship
+    // 16 KB-aligned native libs; org.tensorflow:tensorflow-lite 2.16/2.17 is 4 KB
+    // only and fails PackageManager / Play 16 KB checks. Interpreter API packages
+    // remain org.tensorflow.lite.* so Kotlin call sites need no changes.
+    // Stay on the 1.4.x line: GPU Interpreter support is documented for V1 only.
+    def litertVersion = "1.4.2"
+    implementation("com.google.ai.edge.litert:litert:${litertVersion}")
+    implementation("com.google.ai.edge.litert:litert-gpu:${litertVersion}")
+    implementation("com.google.ai.edge.litert:litert-support:${litertVersion}")
 
-    // Offline transcription fallback (Moonshine; vendored module)
+    // Offline transcription (Moonshine; vendored module, rebuilt with 16 KB pages)
     implementation project(":moonshine-voice")
 
-    // Legacy offline transcription fallback (Vosk) - kept for now until Moonshine is fully wired
-    implementation "com.alphacephei:vosk-android:0.3.47"
+    // Vosk removed from the APK: libvosk.so has no 16 KB-aligned release and is
+    // unused (Moonshine is the offline path). Source under ai/transcription/vosk
+    // is kept for reference but excluded from compilation below.
 
     // Chapter 2 storage
     def room_version = "2.7.0"
@@ -223,7 +246,10 @@ dependencies {
     testImplementation "androidx.room:room-testing:$room_version"
 
     // Meta Wearables DAT SDK for Meta Ray-Ban glasses integration.
-    // Requires GitHub token with read:packages scope in GITHUB_TOKEN env var.
+    // Requires GitHub token with read:packages scope in GITHUB_TOKEN env var
+    // (or github_token in local.properties). Without credentials the app still
+    // compiles against :meta-dat-stubs so HeyCyan builds work offline; Meta
+    // Ray-Ban runtime features will report DAT unavailable.
     def metaDatVersion = "0.8.0"
     if (metaDatEnabled) {
         implementation("com.meta.wearable:mwdat-core:${metaDatVersion}")
@@ -231,7 +257,8 @@ dependencies {
         implementation("com.meta.wearable:mwdat-display:${metaDatVersion}")
         implementation("com.meta.wearable:mwdat-mockdevice:${metaDatVersion}")
     } else {
-        logger.warn("No GitHub package token configured - Meta Wearables DAT SDK dependencies will be skipped.")
+        logger.warn("No GitHub package token configured - using Meta DAT compile stubs (Meta Ray-Ban runtime disabled).")
+        implementation project(":meta-dat-stubs")
     }
 
     // Chapter 4 UI gating test (androidTest)

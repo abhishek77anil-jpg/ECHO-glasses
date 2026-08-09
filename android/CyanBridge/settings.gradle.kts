@@ -6,6 +6,9 @@ pluginManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -41,6 +44,10 @@ include(":shared")
 
 // Moonshine Voice (local wrapper module that builds vendored native sources)
 include(":moonshine-voice")
+
+// Compile-only Meta DAT stubs when GitHub Packages credentials are absent
+include(":meta-dat-stubs")
+
 
 // HeyCyan Core - bundled as composite build for easy compilation
 val heycyanCoreDir = file("../../heycyan-core")
