@@ -13,7 +13,37 @@ npm install
 npx expo start          # scan the QR with Expo Go
 ```
 
-Runs in Expo Go on SDK 54 — no dev build, no native modules, no babel config.
+Runs in Expo Go on SDK 54 — no native modules of its own, no babel config. Every
+dependency it uses ships inside Expo Go, so the prototype needs no build to run.
+
+## Building
+
+Builds go through EAS, because nothing here is compiled locally by default —
+there is no checked-in `android/` folder, and `/android` and `/ios` are
+gitignored as generated output.
+
+```bash
+npm install -g eas-cli
+eas login
+eas init                # writes extra.eas.projectId into app.json, once
+npm run build:apk       # installable APK, internal distribution
+```
+
+| Script | Produces | Use for |
+| --- | --- | --- |
+| `npm run build:apk` | APK (`preview`) | Sideloading onto a test phone |
+| `npm run build:dev` | APK + dev client (`development`) | Native work — loads JS from Metro |
+| `npm run build:play` | AAB (`production`) | Play Store upload |
+| `npm run build:local` | APK, built on this machine | Needs JDK 17 + Android SDK locally |
+
+Application id is `com.fersaiyan.echo` on both platforms. Version codes are
+managed remotely by EAS (`appVersionSource: "remote"`), so don't hand-edit a
+`versionCode` — bump `version` in [app.json](app.json) and let `production`
+auto-increment the rest.
+
+To build without EAS, run `npm run prebuild` to generate a real `android/`
+project, then Gradle it as usual. That folder is disposable — regenerate it
+rather than editing it, or `--clean` will discard your changes.
 
 ## The design
 
@@ -108,8 +138,10 @@ is a start/stop handle that pushes `{ label, kind, text, time }`. Replace the
 scripted timer with the continuous scene stream.
 
 Note that the real path needs an Expo **dev build** and a native module over
-the vendor AAR — the glasses cannot be reached from Expo Go. The rest of the
-app is unaffected by that change.
+the vendor AAR — the glasses cannot be reached from Expo Go. `expo-dev-client`
+is already a dependency and `npm run build:dev` produces that build; what is
+still missing is the native module itself. The rest of the app is unaffected by
+that change.
 
 For the protocol itself see `../android/docs/VENDOR_SDK_REFERENCE_EN.md` and
 `../android/AGENTS.md`; the session-lease rules in `../CLAUDE.md` apply to any
