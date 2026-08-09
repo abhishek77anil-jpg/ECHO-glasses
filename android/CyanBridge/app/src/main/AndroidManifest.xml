@@ -113,6 +113,21 @@
         </activity>
 
         <!--
+            Cue's conversational assistant. Its own launcher entry so a blind user can reach
+            it directly rather than navigating the main app to find it.
+        -->
+        <activity
+            android:name=".cue.assistant.CueAssistantActivity"
+            android:exported="true"
+            android:label="Ask Cue">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
             Cue hardware diagnostics (PRD Spikes A/B/C).
             Its own launcher entry so the diagnostics build needs no changes to MainActivity.
         -->
