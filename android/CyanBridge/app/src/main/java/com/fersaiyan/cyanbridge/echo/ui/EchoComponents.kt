@@ -137,7 +137,7 @@ fun BigBtn(
         if (sub != null) {
             Text(
                 text = sub,
-                style = EchoText.itemDetail.copy(color = subColor),
+                style = EchoText.bigButtonSub.copy(color = subColor),
                 textAlign = TextAlign.Center,
             )
         }
@@ -173,9 +173,9 @@ fun Stepper(
             StepButton(glyph = "−", desc = "Decrease $label, currently $value") { onStep(-1) }
             Text(
                 text = value,
-                style = EchoText.itemTitle,
+                style = EchoText.stepValue,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.width(70.dp),
+                modifier = Modifier.width(72.dp),
             )
             StepButton(glyph = "+", desc = "Increase $label, currently $value") { onStep(1) }
         }
@@ -209,15 +209,17 @@ fun EchoNavBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(horizontal = 12.dp)
+            .padding(top = 10.dp, bottom = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         EchoView.entries.forEach { v ->
             val active = v == current
-            Box(
+            val tint = if (active) EchoColors.text else EchoColors.text2
+            Column(
                 modifier = Modifier
                     .weight(1f)
-                    .defaultMinSize(minHeight = EchoDimens.minTouch)
+                    .defaultMinSize(minHeight = EchoDimens.navMinHeight)
                     .clip(EchoShapes.nav)
                     .background(if (active) EchoColors.surface else Color.Transparent)
                     .border(
@@ -226,17 +228,24 @@ fun EchoNavBar(
                         EchoShapes.nav,
                     )
                     .clickable(role = Role.Tab) { onSelect(v) }
-                    .semantics {
+                    // mergeDescendants collapses the glyph and the label into a
+                    // single focus stop. Without it TalkBack lands on the glyph
+                    // first and reads a decorative symbol as if it were content.
+                    .semantics(mergeDescendants = true) {
                         contentDescription = v.label
                         selected = active
                     },
-                contentAlignment = Alignment.Center,
+                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
+                    text = v.glyph,
+                    style = EchoText.navGlyph.copy(color = tint),
+                    textAlign = TextAlign.Center,
+                )
+                Text(
                     text = v.tab,
-                    style = EchoText.navTab.copy(
-                        color = if (active) EchoColors.text else EchoColors.text2,
-                    ),
+                    style = EchoText.navTab.copy(color = tint),
                     textAlign = TextAlign.Center,
                 )
             }

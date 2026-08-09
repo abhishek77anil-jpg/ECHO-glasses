@@ -6,12 +6,12 @@ package com.fersaiyan.cyanbridge.echo.model
  * A result is deliberately NOT a view — it is a state of [Home], so there is
  * never a screen the user can land on that the swipe ring cannot reach.
  */
-enum class EchoView(val tab: String, val label: String) {
-    Home("Home", "Home. Double tap to analyze."),
-    Live("Live", "Live awareness. Double tap to start or stop."),
-    History("History", "History."),
-    Settings("Audio", "Audio and haptics settings."),
-    Help("Help", "Help. Long press anywhere also opens help.");
+enum class EchoView(val tab: String, val glyph: String, val label: String) {
+    Home("Home", "◉", "Home. Double tap to analyze."),
+    Live("Live", "◎", "Live awareness. Double tap to start or stop."),
+    History("History", "≡", "History."),
+    Settings("Audio", "⚙", "Audio and haptics settings."),
+    Help("Help", "?", "Help. Long press anywhere also opens help.");
 
     fun next(): EchoView = EchoView.entries[(ordinal + 1) % EchoView.entries.size]
 

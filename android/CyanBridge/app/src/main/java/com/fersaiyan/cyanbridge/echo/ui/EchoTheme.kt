@@ -59,7 +59,27 @@ object EchoColors {
  */
 object EchoDimens {
     val minTouch = 56.dp
-    val captureSize = 280.dp
+
+    /**
+     * Capture target. The design specifies `min(72vw, 300px)` — it scales with
+     * the screen instead of being pinned, so it stays thumb-findable on a small
+     * phone and does not become absurd on a tablet. Applied as a fraction of
+     * available width, clamped to [captureMax].
+     */
+    const val CAPTURE_WIDTH_FRACTION = 0.72f
+    val captureMin = 240.dp
+    val captureMax = 300.dp
+
+    /** Gap between the capture button and its outer ring (design: inset -14px). */
+    val captureRingGap = 14.dp
+
+    /**
+     * The design centres the app in a 520px column. On a tablet a full-bleed
+     * row of five nav tabs spreads the targets so far apart that finding them
+     * by feel stops working, which is the whole point of the fixed layout.
+     */
+    val contentMaxWidth = 520.dp
+
     val screenPadding = 24.dp
     val cardRadius = 20.dp
     val itemRadius = 16.dp
@@ -67,7 +87,9 @@ object EchoDimens {
     val stepperSize = 56.dp
     val stepperRadius = 14.dp
     val navRadius = 14.dp
+    val navMinHeight = 60.dp
     val bigButtonMinHeight = 64.dp
+    val statusLineMinHeight = 56.dp
 }
 
 object EchoShapes {
@@ -89,11 +111,12 @@ object EchoText {
         color = EchoColors.text,
         fontSize = 22.sp,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 4.sp,
+        // Design: letter-spacing .35em on 22px.
+        letterSpacing = 7.7.sp,
     )
     val badge = TextStyle(
         color = EchoColors.text2,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.sp,
     )
@@ -101,30 +124,55 @@ object EchoText {
         color = EchoColors.text,
         fontSize = 26.sp,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 4.sp,
+        // Design: letter-spacing .18em on 26px.
+        letterSpacing = 4.7.sp,
     )
-    val captureSub = TextStyle(color = EchoColors.text2, fontSize = 14.sp)
-    val status = TextStyle(color = EchoColors.text2, fontSize = 16.sp, lineHeight = 24.sp)
+    val captureSub = TextStyle(
+        color = EchoColors.text2,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+    )
+
+    /** Body copy under the capture target. Design body scale is 18px / 1.5. */
+    val status = TextStyle(color = EchoColors.text2, fontSize = 17.sp, lineHeight = 26.sp)
+
+    /** The lead line of the status block — always the state, in white and bold. */
+    val statusLead = TextStyle(
+        color = EchoColors.text,
+        fontSize = 19.sp,
+        fontWeight = FontWeight.Bold,
+        lineHeight = 26.sp,
+    )
     val kicker = TextStyle(
         color = EchoColors.text2,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = 2.sp,
+        letterSpacing = 1.8.sp,
     )
     val big = TextStyle(color = EchoColors.text, fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
     val listTitle = TextStyle(
         color = EchoColors.text2,
-        fontSize = 13.sp,
+        fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = 2.sp,
+        letterSpacing = 1.8.sp,
     )
-    val itemTitle = TextStyle(color = EchoColors.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-    val itemDetail = TextStyle(color = EchoColors.text2, fontSize = 14.sp)
+    val itemTitle = TextStyle(color = EchoColors.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    val itemDetail = TextStyle(color = EchoColors.text2, fontSize = 15.sp)
     val bigButton = TextStyle(color = EchoColors.text, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+    val bigButtonSub = TextStyle(
+        color = EchoColors.text2,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+    )
     val stepGlyph = TextStyle(color = EchoColors.text, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+    val stepValue = TextStyle(color = EchoColors.text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
     val navTab = TextStyle(color = EchoColors.text2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-    val empty = TextStyle(color = EchoColors.text2, fontSize = 16.sp)
+    val navGlyph = TextStyle(color = EchoColors.text2, fontSize = 20.sp)
+    val empty = TextStyle(color = EchoColors.text2, fontSize = 17.sp)
     val note = TextStyle(color = EchoColors.focus, fontSize = 14.sp, lineHeight = 20.sp)
+
+    /** Transient gesture-confirmation toast. */
+    val toast = TextStyle(color = EchoColors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
 }
 
 /** Material3 typography is unused — ECHO styles every text node explicitly. */

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,13 +27,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fersaiyan.cyanbridge.echo.audio.HapticPattern
@@ -77,6 +79,12 @@ fun HomeScreen(
     val pulse = rememberWorkingPulse(analyzing)
     val press = rememberPressScale(captureInteraction)
 
+    // Design: `width: min(72vw, 300px)`. The target tracks the screen so it stays
+    // findable by thumb on a small phone without ballooning on a large one.
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val captureSize = (screenWidth * EchoDimens.CAPTURE_WIDTH_FRACTION)
+        .coerceIn(EchoDimens.captureMin, EchoDimens.captureMax)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,14 +92,27 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
     ) {
+        // The outer ring from the design (`::before`, inset -14px). It is
+        // decorative to a screen reader but load-bearing for low vision: it
+        // doubles the visual footprint of the target, so the button can be
+        // located peripherally without resolving the label.
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(captureSize + EchoDimens.captureRingGap * 2)
+                    .clip(CircleShape)
+                    .border(1.dp, EchoColors.border, CircleShape)
+                    .clearAndSetSemantics { },
+            )
+
         Column(
             modifier = Modifier
                 // sizeIn rather than a fixed size: at a 200% font scale the label inside a
-                // hard 280dp circle clips, and the people most likely to be running a large
+                // hard circle clips, and the people most likely to be running a large
                 // font scale are exactly this app's users.
                 .sizeIn(
-                    minWidth = EchoDimens.captureSize,
-                    minHeight = EchoDimens.captureSize,
+                    minWidth = captureSize,
+                    minHeight = captureSize,
                 )
                 .graphicsLayer {
                     val scale = pulse * press
@@ -137,58 +158,51 @@ fun HomeScreen(
                 textAlign = TextAlign.Center,
             )
         }
+        }
+
+        // Status block. The design fixes this at 56px minimum so the capture
+        // target does not jump up and down as the message changes length — a
+        // moving target is exactly what a low-vision user cannot re-acquire.
+        val (lead, detail, leadColor) = when {
+            analyzing -> Triple(
+                "Analyzing…",
+                "Hold steady.",
+                EchoColors.text,
+            )
+
+            status == CaptureStatus.Error -> Triple(
+                "Try again",
+                error.orEmpty(),
+                EchoColors.danger,
+            )
+
+            else -> Triple(
+                "Ready",
+                "Double tap the center button to begin. Long press for help.",
+                EchoColors.text,
+            )
+        }
 
         Column(
             modifier = Modifier
-                .widthIn(max = 300.dp)
+                .widthIn(max = 340.dp)
+                .defaultMinSize(minHeight = EchoDimens.statusLineMinHeight)
                 // Not a live region: the same words are spoken through
                 // EchoSpeech at HIGH priority the moment the state changes.
                 // Marking it live would say everything twice under TalkBack.
                 .semantics(mergeDescendants = true) { },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            when {
-                analyzing -> Text(
-                    text = "Analyzing…",
-                    style = EchoText.status.copy(
-                        color = EchoColors.text,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    textAlign = TextAlign.Center,
-                )
-
-                status == CaptureStatus.Error -> {
-                    Text(
-                        text = error.orEmpty(),
-                        style = EchoText.status.copy(
-                            color = EchoColors.danger,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = "Double tap the center button to try again.",
-                        style = EchoText.status,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-
-                else -> {
-                    Text(
-                        text = "Ready",
-                        style = EchoText.status.copy(
-                            color = EchoColors.text,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = "Double tap the center button to begin. Long press for help.",
-                        style = EchoText.status,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
+            Text(
+                text = lead,
+                style = EchoText.statusLead.copy(color = leadColor),
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = detail,
+                style = EchoText.status,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -310,10 +324,12 @@ fun LiveScreen(on: Boolean, feed: List<LiveEvent>, onToggle: () -> Unit) {
         // which is the single behaviour the priority system exists to stop.
         Column {
             feed.forEach { ev ->
+                // Design puts the text and time on one line: `text · time`.
+                // The coloured left rule is never the only signal — the label
+                // ("Arrived", "Left") carries the same meaning without colour.
                 EchoItem(
                     title = ev.label,
-                    detail = ev.text,
-                    extra = formatTime(ev.time),
+                    detail = "${ev.text} · ${formatTime(ev.time)}",
                     ruleColor = ruleColor[ev.kind] ?: EchoColors.focus,
                     contentDesc = "${ev.label}. ${ev.text}, at ${formatTime(ev.time)}",
                 )
@@ -413,6 +429,19 @@ fun SettingsScreen(
             label = "Feedback intensity",
             value = EchoLimits.hapticLabel(settings.hapticScale),
             onStep = onStepHaptics,
+        )
+
+        // The design carries a note here about vibration not working on iOS
+        // browsers. That caveat is a web-prototype limitation and does not
+        // apply to this build, so it is replaced with the one that does: on a
+        // device with no vibration motor the patterns are silently skipped, and
+        // a user who cannot feel them needs to know that rather than assume the
+        // setting is broken.
+        Text(
+            text = "If this phone has no vibration motor, haptics are skipped and " +
+                "ECHO relies on speech alone.",
+            style = EchoText.itemDetail,
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
         )
 
         Text(

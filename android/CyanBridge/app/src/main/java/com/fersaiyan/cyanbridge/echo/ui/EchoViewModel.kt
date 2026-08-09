@@ -39,6 +39,9 @@ import kotlin.math.roundToInt
 
 private const val LIVE_FEED_MAX = 8
 
+/** Design: the toast holds for 1400ms before fading. */
+private const val HINT_DURATION_MS = 1400L
+
 /**
  * Orchestration for the ECHO screens: state, flows and the gesture handlers.
  *
@@ -71,6 +74,18 @@ class EchoViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _liveFeed = MutableStateFlow<List<LiveEvent>>(emptyList())
     val liveFeed: StateFlow<List<LiveEvent>> = _liveFeed.asStateFlow()
+
+    /**
+     * Transient gesture confirmation shown in the toast pill.
+     *
+     * Purely visual — the same event is always spoken as well, so this exists
+     * for users with some sight who want instant proof the gesture landed
+     * rather than waiting out a sentence. Never announced; see [EchoToast].
+     */
+    private val _hint = MutableStateFlow<String?>(null)
+    val hint: StateFlow<String?> = _hint.asStateFlow()
+
+    private var hintJob: Job? = null
 
     /** What "repeat last result" replays. */
     private var lastSpeech: String? = null
@@ -109,6 +124,16 @@ class EchoViewModel(app: Application) : AndroidViewModel(app) {
         haptic?.let { haptics.play(it) }
     }
 
+    /** Shows a toast for [HINT_DURATION_MS], replacing any hint already up. */
+    private fun showHint(text: String) {
+        hintJob?.cancel()
+        _hint.value = text
+        hintJob = viewModelScope.launch {
+            delay(HINT_DURATION_MS)
+            _hint.value = null
+        }
+    }
+
     /* ---------- navigation ---------- */
 
     fun goView(target: EchoView, speak: Boolean = true) {
@@ -120,7 +145,9 @@ class EchoViewModel(app: Application) : AndroidViewModel(app) {
 
     fun swipe(next: Boolean) {
         val cur = _view.value
-        goView(if (next) cur.next() else cur.prev())
+        val target = if (next) cur.next() else cur.prev()
+        goView(target)
+        showHint(target.tab)
     }
 
     /* ---------- capture ---------- */
@@ -182,6 +209,7 @@ class EchoViewModel(app: Application) : AndroidViewModel(app) {
 
     fun repeatLast() {
         val text = lastSpeech
+        showHint("Repeat")
         if (text != null) {
             announce(text, HapticPattern.Nav, Priority.HIGH)
         } else {
@@ -318,6 +346,7 @@ class EchoViewModel(app: Application) : AndroidViewModel(app) {
 
     fun onHelp() {
         _view.value = EchoView.Help
+        showHint("Help")
         announce(helpText(), HapticPattern.Confirm, Priority.HIGH)
     }
 

@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import com.fersaiyan.cyanbridge.echo.model.CaptureStatus
@@ -49,10 +51,22 @@ fun EchoShell(vm: EchoViewModel) {
     // model, because TalkBack consumes the touch gestures ECHO is built on.
     val screenReaderOn by rememberScreenReaderState()
 
+    val hint by vm.hint.collectAsState()
+
+    // Design: the app lives in a 520px column, centred. On a tablet a
+    // full-bleed row of five nav tabs spreads the targets so far apart that
+    // finding them by feel stops working — which is the point of a layout that
+    // never moves.
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(EchoColors.bg),
+        contentAlignment = Alignment.TopCenter,
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(EchoColors.bg)
+            .widthIn(max = EchoDimens.contentMaxWidth)
             .systemBarsPadding(),
     ) {
         EchoHeader(status = echo.status.badge)
@@ -132,5 +146,11 @@ fun EchoShell(vm: EchoViewModel) {
         }
 
         EchoNavBar(current = view, onSelect = { vm.goView(it) })
+    }
+
+        // Sits above everything, including the nav bar. Purely visual — it is
+        // removed from the accessibility tree because the same words are always
+        // spoken. See EchoToast.
+        EchoToast(message = hint, reduceMotion = screenReaderOn)
     }
 }
