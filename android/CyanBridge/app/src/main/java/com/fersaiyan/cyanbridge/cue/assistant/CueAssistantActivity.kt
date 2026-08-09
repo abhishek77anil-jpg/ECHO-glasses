@@ -182,6 +182,23 @@ class CueAssistantActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 return
             }
 
+            AssistantReply.Action.DescribeSurroundings -> {
+                // Ambient scan pipeline is not wired into this screen yet.
+                announce("I can't describe your surroundings from this screen yet.")
+                return
+            }
+
+            is AssistantReply.Action.SetAmbientScanning -> {
+                // Preference is acknowledged via reply.speech when the scan service is live.
+                // Until then, confirm so the user is not left without feedback.
+                if (reply.speech.isNullOrBlank()) {
+                    announce(
+                        if (action.enabled) "Surroundings on" else "Surroundings off",
+                    )
+                    return
+                }
+            }
+
             is AssistantReply.Action.RepeatLast -> {
                 val previous = lastAnswer
                 if (previous.isBlank()) {
